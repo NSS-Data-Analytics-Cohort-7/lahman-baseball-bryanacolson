@@ -86,7 +86,7 @@ select playerid, yearid, h
 FROM batting
 ORDER by h DESC;
 
---11
+---11
 SELECT t.w, s.salary
 FROM salaries as s
 INNER JOIN managers as m
@@ -100,3 +100,11 @@ on p.playerid= mh.playerid
 GROUP by s.salary, t.w
 ORDER by s.salary;
 
+SELECT s.salary, s.playerid, t.w, t.teamid, p.namegiven
+FROM salaries as s
+INNER JOIN teams as t
+ON t.yearid = s.yearid
+INNER JOIN people as p
+ON s.playerid = p.playerid
+GROUP by s.salary, t.teamid, t.w, s.playerid, p.namegiven
+ORDER by s.salary DESC;
