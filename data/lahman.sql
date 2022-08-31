@@ -15,17 +15,15 @@ INNER JOIN people as  p
 on s.schoolid = c.schoolid
 WHERE s.schoolname = 'Vanderbilt University';
 --4 
-SELECT pos
-CASE
-	WHEN pos LIKE '%OF%' THEN 'Outfield'
-	WHEN pos ILIKE '%SS%' THEN 'Infield'
-	WHEN pos ILIKE '%1B%' THEN 'Infield'
-	WHEN pos ILIKE '%2B%' THEN 'Infield'
-	WHEN pos ILIKE '%3b' THEN 'Infield'
-	WHEN pos ILIKE '%P%' THEN 'Battery'
-	WHEN post ILIKE '%C%' THEN 'Battery
-ELSE 'Other'
-END AS fielding_table
+SELECT CAST(pos as varchar)
+    WHEN pos LIKE '%OF%' THEN 'Outfield'
+	WHEN pos LIKE '%SS%' THEN 'Infield'
+	WHEN pos LIKE '%1B%' THEN 'Infield'
+	WHEN pos LIKE '%2B%' THEN 'Infield'
+	WHEN pos LIKE '%3b' THEN 'Infield'
+	WHEN pos LIKE '%P%' THEN 'Battery'
+	WHEN pos LIKE '%C%' THEN 'Battery'
+	END
 from fielding;
 
 --5
@@ -108,3 +106,14 @@ INNER JOIN people as p
 ON s.playerid = p.playerid
 GROUP by s.salary, t.teamid, t.w, s.playerid, p.namegiven
 ORDER by s.salary DESC;
+
+--12 A)
+SELECT DISTINCT(ghome), t.attendance, t.w, hg.team
+FROM teams as t
+INNER JOIN homegames as hg
+ON t.attendance = hg.attendance
+
+
+--13
+Select h 
+from pitching;
