@@ -15,16 +15,21 @@ INNER JOIN people as  p
 on s.schoolid = c.schoolid
 WHERE s.schoolname = 'Vanderbilt University';
 --4 
-SELECT CAST(pos as varchar)
-    WHEN pos LIKE '%OF%' THEN 'Outfield'
-	WHEN pos LIKE '%SS%' THEN 'Infield'
-	WHEN pos LIKE '%1B%' THEN 'Infield'
-	WHEN pos LIKE '%2B%' THEN 'Infield'
-	WHEN pos LIKE '%3b' THEN 'Infield'
-	WHEN pos LIKE '%P%' THEN 'Battery'
-	WHEN pos LIKE '%C%' THEN 'Battery'
+SELECT p.playerid, f.teamid, f.yearid, f.po,
+CASE WHEN pos ILIKE '%OF%' THEN 'Outfield'
+	WHEN pos ILIKE '%SS%' THEN 'Infield'
+	WHEN pos ILIKE '%1B%' THEN 'Infield'
+	WHEN pos ILIKE '%2B%' THEN 'Infield'
+	WHEN pos ILIKE '%3b' THEN 'Infield'
+	WHEN pos ILIKE '%P%' THEN 'Battery'
+	WHEN pos ILIKE '%C%' THEN 'Battery'
 	END
-from fielding;
+from fielding as f
+INNER JOIN people as p
+on p.playerid = f.playerid
+WHERE yearid = '2016'
+GROUP BY f.pos, p.playerid, f.teamid, f.yearid, f.po
+ORDER BY f.po DESC;
 
 --5
 SELECT (AVG(t.so))
@@ -115,5 +120,19 @@ ON t.attendance = hg.attendance
 
 
 --13
-Select h 
-from pitching;
+Select p.throws, pp.so, COUNT(DISTINCT p.namegiven)/(SELECT COUNT (DISTINCT p.namegiven)) as perc
+FROM people p
+INNER JOIN pitching as pp
+on p.playerid= pp.playerid
+WHERE p.throws = 'L'
+GROUP BY p.throws, pp.so, p.namegiven
+ORDER BY pp.so DESC;
+
+Select p.throws, pp.so, p.namegiven
+FROM people p
+INNER JOIN pitching as pp
+on p.playerid= pp.playerid
+WHERE so >= '300'
+GROUP BY p.throws, pp.so, p.namegiven
+ORDER BY pp.so DESC
+;
