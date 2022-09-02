@@ -1,19 +1,25 @@
 --1
-SELECT yearid
+SELECT DISTINCT(yearid)
 FROM teams;
 --2
-SELECT namegiven, height
-FROM people
-order by height ASC
+SELECT p.namegiven, p.height, a.G_all
+FROM people as p 
+INNER JOIN appearances as a
+ON p.playerid = a.playerid
+order by p.height ASC
 LIMIT 1;
+
 --3
-SELECT DISTINCT(p.namegiven), s.schoolid, p.playerid, s.schoolname
+SELECT DISTINCT(p.namegiven), s.schoolname, sa.salary
 FROM collegeplaying as c
 INNER JOIN schools s
 on s.schoolid = c.schoolid
 INNER JOIN people as  p
 on s.schoolid = c.schoolid
-WHERE s.schoolname = 'Vanderbilt University';
+INNER JOIN salaries as sa
+on sa.playerid = p.playerid
+WHERE s.schoolname = 'Vanderbilt University'
+ORDER BY sa.salary DESC;
 --4 
 SELECT p.playerid, f.teamid, f.yearid, f.po,
 CASE WHEN pos ILIKE '%OF%' THEN 'Outfield'
@@ -23,7 +29,7 @@ CASE WHEN pos ILIKE '%OF%' THEN 'Outfield'
 	WHEN pos ILIKE '%3b' THEN 'Infield'
 	WHEN pos ILIKE '%P%' THEN 'Battery'
 	WHEN pos ILIKE '%C%' THEN 'Battery'
-	END
+	END as Position
 from fielding as f
 INNER JOIN people as p
 on p.playerid = f.playerid
@@ -31,26 +37,57 @@ WHERE yearid = '2016'
 GROUP BY f.pos, p.playerid, f.teamid, f.yearid, f.po
 ORDER BY f.po DESC;
 
---5
-SELECT (AVG(t.so))
-FROM teams as t
-INNER JOIN appearances as a
-ON a.yearid = t.yearid
-INNER JOIN people as p
-on p.playerid = a.playerid
-GROUP BY p.namegiven;
 
+
+--5
+SELECT AVG(p.so),
+    COUNT(t.yearid),
+    CONCAT(
+        FLOOR(t.YEARid / 10) * 10, 
+        '-', 
+        (CEIL(t.YEARid / 10) * 10) - 1)
+FROM teams as t
+INNER JOIN pitching as p
+ON p.yearid = t.yearid
+GROUP BY
+    CONCAT(
+        FLOOR(t.YEARid / 10) * 10,
+        '-', 
+        (CEIL(t.YEARid / 10) * 10) - 1);
+	
 --6
-SELECT (AVG(f.sb)/AVG(f.cs))
-FROM fielding as f
-INNER JOIN people as p 
-ON f.playerid = p.playerid;
+SELECT COALESCE(b.sb / NULLIF(b.cs,0), 0 ), p.namegiven
+FROM batting as b
+INNER JOIN people as p
+on p.playerid = b.playerid
+GROUP BY b.sb, b.cs, p.namegiven
+ORDER by coalesce DESC
+LIMIT 1;
+
+SELECT sb, cs, playerid,
+CASE 
+WHEN cs <> 0 THEN (sb/cs) ELSE 0 END
+FROM batting
+WHERE sb >= 20
+GROUP BY sb, cs, playerid
+ORDER by sb DESC;
+
+select sb / nullif(cs, 0), playerid
+from batting
+WHERE (sb / nullif(cs,0)) >= 20
+ORDER BY (sb / nullif(cs,0)) DESC;
 
 --7a (largest wins)
 Select yearid, w, teamid, wcwin
 FROM teams
 WHERE yearid BETWEEN '1970' and '2016'
 ORDER by w DESC;
+
+SELECT DISTINCT (yearid), w ,teamid, wcwin
+FROM teams
+WHERE yearid BETWEEN '1970' and '2016' and wcwin = 'Y' 
+EXCEPT (Select yearid, w, teamid, wcwin from teams where yearid = '1995')
+ORDER BY w ASC;
 
 --8
 SELECT (AVG(attendance/games)), h.team, p.park_name
@@ -63,16 +100,16 @@ ORDER BY (AVG(attendance/games))
 LIMIT 5;
 
 --9
-SELECT aw.playerid, COUNT(aw.awardid)
+SELECT aw.playerid, COUNT(aw.awardid), p.namegiven
 FROM awardsmanagers as aw
 INNER JOIN people as p
 ON p.playerid = aw.playerid
 WHERE awardid = 'TSN Manager of the Year'
-GROUP BY aw.playerid, aw.awardid
+GROUP BY aw.playerid, aw.awardid, p.namegiven
 ORDER BY COUNT(aw.playerid) DESC;
 --9bish
 
-SELECT aw.playerid, COUNT(aw.awardid), t.lgid
+SELECT (p.namegiven), aw.playerid, COUNT(aw.awardid), t.lgid
 FROM awardsmanagers as aw
 INNER JOIN people as p
 ON p.playerid = aw.playerid
@@ -81,8 +118,21 @@ ON p.playerid = mh.playerid
 INNER JOIN teams as t
 ON mh.yearid = t.yearid
 WHERE awardid = 'TSN Manager of the Year'
-GROUP BY aw.playerid, aw.awardid, t.lgid
-ORDER BY COUNT(aw.playerid) DESC;
+GROUP BY aw.playerid, aw.awardid, t.lgid, p.namegiven
+ORDER BY p.namegiven DESC;
+
+SELECT p.namegiven, aw.playerid, COUNT(aw.awardid), t.lgid
+FROM awardsmanagers as aw
+INNER JOIN 
+managershalf as mh
+ON aw.playerid = mh.playerid
+INNER JOIN teams as t
+ON mh.yearid = t.yearid
+INNER JOIN people as p
+ON p.playerid = mh.playerid
+WHERE aw.awardid = 'TSN Manager of the year'
+GROUP BY aw.playerid, aw.awardid, t.lgid, p.namegiven
+ORDER BY p.namegiven DESC;
 
 --10
 select playerid, yearid, h
@@ -120,7 +170,7 @@ ON t.attendance = hg.attendance
 
 
 --13
-Select p.throws, pp.so, COUNT(DISTINCT p.namegiven)/(SELECT COUNT (DISTINCT p.namegiven)) as perc
+Select DISTINCT(p.namegiven)/(COUNT(p.namegiven) p.throws, pp.so as perc
 FROM people p
 INNER JOIN pitching as pp
 on p.playerid= pp.playerid
