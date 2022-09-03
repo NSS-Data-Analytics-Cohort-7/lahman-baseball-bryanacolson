@@ -49,11 +49,13 @@ SELECT AVG(p.so),
 FROM teams as t
 INNER JOIN pitching as p
 ON p.yearid = t.yearid
+WHERE p.yearid BETWEEN '1920' and '2016'
 GROUP BY
     CONCAT(
         FLOOR(t.YEARid / 10) * 10,
         '-', 
-        (CEIL(t.YEARid / 10) * 10) - 1);
+        (CEIL(t.YEARid / 10) * 10) - 1)
+ORDER by concat ASC;
 	
 --6
 SELECT COALESCE(b.sb / NULLIF(b.cs,0), 0 ), p.namegiven
@@ -64,25 +66,7 @@ GROUP BY b.sb, b.cs, p.namegiven
 ORDER by coalesce DESC
 LIMIT 1;
 
-SELECT sb, cs, playerid,
-CASE 
-WHEN cs <> 0 THEN (sb/cs) ELSE 0 END
-FROM batting
-WHERE sb >= 20
-GROUP BY sb, cs, playerid
-ORDER by sb DESC;
-
-select sb / nullif(cs, 0), playerid
-from batting
-WHERE (sb / nullif(cs,0)) >= 20
-ORDER BY (sb / nullif(cs,0)) DESC;
-
 --7a (largest wins)
-Select yearid, w, teamid, wcwin
-FROM teams
-WHERE yearid BETWEEN '1970' and '2016'
-ORDER by w DESC;
-
 SELECT DISTINCT (yearid), w ,teamid, wcwin
 FROM teams
 WHERE yearid BETWEEN '1970' and '2016' and wcwin = 'Y' 
@@ -121,22 +105,11 @@ WHERE awardid = 'TSN Manager of the Year'
 GROUP BY aw.playerid, aw.awardid, t.lgid, p.namegiven
 ORDER BY p.namegiven DESC;
 
-SELECT p.namegiven, aw.playerid, COUNT(aw.awardid), t.lgid
-FROM awardsmanagers as aw
-INNER JOIN 
-managershalf as mh
-ON aw.playerid = mh.playerid
-INNER JOIN teams as t
-ON mh.yearid = t.yearid
-INNER JOIN people as p
-ON p.playerid = mh.playerid
-WHERE aw.awardid = 'TSN Manager of the year'
-GROUP BY aw.playerid, aw.awardid, t.lgid, p.namegiven
-ORDER BY p.namegiven DESC;
-
 --10
-select playerid, yearid, h
-FROM batting
+select b.playerid, b.yearid, b.h, p.namegiven
+FROM batting as b
+inner join people as p
+on p.playerid = b.playerid
 ORDER by h DESC;
 
 ---11
